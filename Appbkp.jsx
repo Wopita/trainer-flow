@@ -31,7 +31,7 @@ import {
   Clock, 
   Palette,
   Type,
-  Image as ImageIcon,
+  ImageIcon,
   LogIn,
   ChevronLeft,
   ChevronRight,
@@ -39,7 +39,8 @@ import {
   AlertCircle,
   Edit2,
   Save,
-  Trash2
+  Trash2,
+  TrendingUp
 } from 'lucide-react';
 
 // --- CONFIGURACIÓN FIREBASE ---
@@ -98,7 +99,6 @@ const App = () => {
 
   if (loading) return <div className="h-screen flex items-center justify-center bg-slate-950 text-white"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-500"></div></div>;
 
-  // PANTALLA DE LOGIN LIMPIA
   if (!user || user.isAnonymous) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 p-6">
@@ -134,7 +134,7 @@ const App = () => {
           <span className="hidden md:block font-black text-xl tracking-tighter uppercase" style={{color: settings.primaryColor}}>{settings.appName}</span>
         </div>
         <nav className="flex-1 px-4 space-y-2 mt-4">
-          <NavItem Icon={Users} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
+          <NavItem Icon={ClipboardList} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
           <NavItem Icon={Users} label="Alumnos" active={activeTab === 'students'} onClick={() => setActiveTab('students')} />
           <NavItem Icon={CalendarIcon} label="Agenda" active={activeTab === 'calendar'} onClick={() => setActiveTab('calendar')} />
           <NavItem Icon={CreditCard} label="Pagos" active={activeTab === 'payments'} onClick={() => setActiveTab('payments')} />
@@ -425,9 +425,20 @@ const PaymentsView = ({ students, payments, user }) => {
   
   const months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
+  // Calculating Monthly Balance
+  const monthlyBalances = payments.reduce((acc, p) => {
+    const key = `${p.month}-${p.year}`;
+    if (!acc[key]) acc[key] = { month: p.month, year: p.year, total: 0 };
+    acc[key].total += Number(p.amount || 0);
+    return acc;
+  }, {});
+
+  const balanceList = Object.values(monthlyBalances).sort((a, b) => b.year !== a.year ? b.year - a.year : b.month - a.month);
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto animate-in fade-in">
       <h2 className="text-3xl font-black italic tracking-tighter uppercase">Gestión de Pagos</h2>
+      
       <form onSubmit={add} className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 grid md:grid-cols-5 gap-4 items-end shadow-sm">
         <div className="col-span-2 md:col-span-1">
           <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block tracking-widest">Periodo</label>
@@ -436,7 +447,7 @@ const PaymentsView = ({ students, payments, user }) => {
               {months.map((m, i) => <option key={i} value={i+1}>{m}</option>)}
             </select>
             <select className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl outline-none text-xs font-bold" value={form.year} onChange={e => setForm({...form, year: Number(e.target.value)})}>
-              {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+              {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
         </div>
@@ -460,6 +471,16 @@ const PaymentsView = ({ students, payments, user }) => {
         </div>
         <button type="submit" className="bg-emerald-600 text-white py-3.5 rounded-xl font-black uppercase text-sm shadow-lg hover:bg-emerald-700 transition active:scale-95 shadow-emerald-500/20 tracking-widest">Registrar</button>
       </form>
+
+      {/* Monthly Balance Summary Section */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 py-4">
+        {balanceList.slice(0, 6).map((b, i) => (
+          <div key={i} className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl flex flex-col items-center">
+            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">{months[b.month - 1]} {b.year}</span>
+            <span className="text-xl font-black text-emerald-700 italic tracking-tighter">${b.total}</span>
+          </div>
+        ))}
+      </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
@@ -500,6 +521,7 @@ const SettingsView = ({ settings, user }) => {
   const [temp, setTemp] = useState(settings);
   const save = async () => {
     await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'config', 'settings'), temp);
+    alert("¡Ajustes guardados!");
   };
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in">
@@ -510,7 +532,7 @@ const SettingsView = ({ settings, user }) => {
           <input className="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl outline-none font-black ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-blue-500 transition-all uppercase tracking-tighter" value={temp.appName} onChange={e => setTemp({...temp, appName: e.target.value})} />
         </div>
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-2 tracking-widest"><ImageIcon size={14}/> URL del Logo</label>
+          <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-2 tracking-widest"><TrendingUp size={14}/> URL del Logo</label>
           <input className="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl outline-none ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-blue-500 transition-all" value={temp.logoUrl} onChange={e => setTemp({...temp, logoUrl: e.target.value})} />
         </div>
         <div className="grid grid-cols-2 gap-4">

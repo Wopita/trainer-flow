@@ -3,8 +3,6 @@ import { initializeApp } from 'firebase/app';
 import { 
   getAuth, 
   onAuthStateChanged, 
-  signInWithCustomToken, 
-  signInAnonymously,
   signOut,
   GoogleAuthProvider,
   signInWithPopup
@@ -31,7 +29,7 @@ import {
   Clock, 
   Palette,
   Type,
-  ImageIcon,
+  Image as ImageIcon,
   LogIn,
   ChevronLeft,
   ChevronRight,
@@ -40,7 +38,8 @@ import {
   Edit2,
   Save,
   Trash2,
-  TrendingUp
+  Camera,
+  X
 } from 'lucide-react';
 
 // --- CONFIGURACIÓN FIREBASE ---
@@ -74,12 +73,7 @@ const App = () => {
   });
 
   useEffect(() => {
-    const initAuth = async () => {
-      try {
-        await signInAnonymously(auth);
-      } catch (err) { console.error("Error Auth:", err); }
-    };
-    initAuth();
+    // Eliminado signInAnonymously para evitar error admin-restricted-operation
     const unsubscribe = onAuthStateChanged(auth, (u) => { 
       setUser(u); 
       setLoading(false); 
@@ -97,20 +91,15 @@ const App = () => {
     return () => { unsubS(); unsubSt(); unsubCl(); unsubPy(); };
   }, [user]);
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-slate-950 text-white"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-500"></div></div>;
+  if (loading) return <div className="h-screen flex items-center justify-center bg-slate-950 text-white font-black italic uppercase tracking-widest"><div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-500 mr-4"></div> Iniciando...</div>;
 
-  if (!user || user.isAnonymous) {
+  if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950 p-6">
         <div className="max-w-md w-full bg-slate-900 rounded-3xl p-12 text-center border border-slate-800 shadow-2xl">
-          <div className="flex justify-center mb-8 text-blue-500">
-            <Users size={80} strokeWidth={1.5} />
-          </div>
-          <h1 className="text-4xl font-black text-white mb-10 tracking-tighter uppercase">{settings.appName}</h1>
-          <button 
-            onClick={() => signInWithPopup(auth, new GoogleAuthProvider())} 
-            className="w-full flex items-center justify-center gap-3 bg-white text-black font-black py-5 rounded-2xl hover:bg-slate-200 transition active:scale-95 shadow-xl uppercase text-sm"
-          >
+          <div className="flex justify-center mb-8 text-blue-500"><Users size={80} strokeWidth={1.5} /></div>
+          <h1 className="text-4xl font-black text-white mb-10 tracking-tighter uppercase italic">{settings.appName}</h1>
+          <button onClick={() => signInWithPopup(auth, new GoogleAuthProvider())} className="w-full flex items-center justify-center gap-3 bg-white text-black font-black py-5 rounded-2xl hover:bg-slate-200 transition active:scale-95 shadow-xl uppercase text-sm">
             <LogIn size={18} /> Ingresar con Google
           </button>
         </div>
@@ -127,11 +116,11 @@ const App = () => {
   };
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 overflow-hidden font-sans">
       <aside className="w-20 md:w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-all">
         <div className="p-6 flex items-center gap-3">
           <img src={settings.logoUrl} className="w-10 h-10 rounded-xl object-cover shadow-lg" alt="Logo" />
-          <span className="hidden md:block font-black text-xl tracking-tighter uppercase" style={{color: settings.primaryColor}}>{settings.appName}</span>
+          <span className="hidden md:block font-black text-xl tracking-tighter uppercase italic" style={{color: settings.primaryColor}}>{settings.appName}</span>
         </div>
         <nav className="flex-1 px-4 space-y-2 mt-4">
           <NavItem Icon={ClipboardList} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} />
@@ -171,7 +160,7 @@ const DashboardView = ({ students, classes, settings, payments }) => {
   return (
     <div className="space-y-8 max-w-6xl mx-auto animate-in fade-in slide-in-from-bottom-4">
       <header>
-        <h1 className="text-4xl font-black tracking-tighter uppercase">Panel de Control</h1>
+        <h1 className="text-4xl font-black tracking-tighter uppercase italic">Panel de Control</h1>
         <p className="text-slate-500 dark:text-slate-400 font-medium">Gestión integral de {settings.appName}.</p>
       </header>
       <div className="grid md:grid-cols-3 gap-6">
@@ -179,7 +168,7 @@ const DashboardView = ({ students, classes, settings, payments }) => {
           <div key={i} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm hover:scale-[1.02] transition-all">
             <div className={`${s.color} w-12 h-12 rounded-2xl flex items-center justify-center text-white mb-4 shadow-lg`}><s.Icon size={24} /></div>
             <p className="text-slate-500 text-sm font-bold uppercase tracking-wider">{s.label}</p>
-            <p className="text-3xl font-black mt-1">{s.val}</p>
+            <p className="text-3xl font-black mt-1 tracking-tighter">{s.val}</p>
           </div>
         ))}
       </div>
@@ -191,7 +180,9 @@ const DashboardView = ({ students, classes, settings, payments }) => {
             return (
               <div key={c.id} className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-4">
-                   <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 font-black uppercase">{s?.name?.[0] || '?'}</div>
+                   <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 font-black uppercase overflow-hidden border border-blue-500/20 shadow-inner">
+                      {s?.photo ? <img src={s.photo} className="w-full h-full object-cover" /> : s?.name?.[0] || '?'}
+                   </div>
                    <div>
                      <p className="font-bold">{s?.name || 'Alumno sin nombre'}</p>
                      <p className="text-xs text-slate-500 font-bold uppercase">{c.date} • {c.time} hs</p>
@@ -212,46 +203,87 @@ const DashboardView = ({ students, classes, settings, payments }) => {
 const StudentsView = ({ students, user }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [form, setForm] = useState({ name: '', phone: '', objective: '', height: '', weight: '', disability: '', notes: '' });
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [form, setForm] = useState({ name: '', phone: '', email: '', instagram: '', objective: '', height: '', weight: '', disability: '', notes: '', photo: '' });
+
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 300;
+        const scaleSize = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+        setForm({ ...form, photo: dataUrl });
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const save = async (e) => {
     e.preventDefault();
     if (!form.name) return;
-    
     if (editingId) {
       await updateDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'students', editingId), form);
     } else {
       await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'students'), { ...form, createdAt: new Date().toISOString() });
     }
-    
-    setForm({ name: '', phone: '', objective: '', height: '', weight: '', disability: '', notes: '' });
+    setForm({ name: '', phone: '', email: '', instagram: '', objective: '', height: '', weight: '', disability: '', notes: '', photo: '' });
     setIsAdding(false);
     setEditingId(null);
   };
 
-  const startEdit = (student) => {
+  const startEdit = (e, student) => {
+    e.stopPropagation();
     setForm(student);
     setEditingId(student.id);
     setIsAdding(true);
   };
+
+  const deleteS = async (e, id) => {
+    e.stopPropagation();
+    if (window.confirm("¿Seguro querés eliminar a esta alumna?")) {
+      await deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'students', id));
+    }
+  }
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-black italic tracking-tighter uppercase">Mis Alumnos</h2>
         {!isAdding && (
-          <button onClick={() => setIsAdding(true)} className="bg-blue-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition">
-            <Plus size={20} /> NUEVO ALUMNO
+          <button onClick={() => setIsAdding(true)} className="bg-blue-600 text-white px-6 py-3 rounded-2xl flex items-center gap-2 font-bold shadow-lg shadow-blue-600/20 active:scale-95 transition uppercase text-xs">
+            <Plus size={20} /> Nueva Alumna
           </button>
         )}
       </div>
 
       {isAdding && (
         <form onSubmit={save} className="bg-white dark:bg-slate-900 p-8 rounded-3xl border-2 border-blue-500/20 shadow-xl space-y-4 animate-in zoom-in-95">
-          <h3 className="font-black text-xl uppercase tracking-tighter">{editingId ? 'Editar Alumno' : 'Nuevo Alumno'}</h3>
+          <h3 className="font-black text-xl uppercase tracking-tighter italic">{editingId ? 'Editar Alumna' : 'Nueva Alumna'}</h3>
+          
+          <div className="flex flex-col md:flex-row gap-6 items-center mb-6">
+            <div className="relative w-32 h-32 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden border-2 border-dashed border-slate-300 dark:border-slate-700 shadow-inner group">
+               {form.photo ? <img src={form.photo} className="w-full h-full object-cover" /> : <Camera className="text-slate-400 group-hover:scale-110 transition" size={30} />}
+               <input type="file" accept="image/*" capture="environment" className="absolute inset-0 opacity-0 cursor-pointer" onChange={handlePhotoChange} />
+            </div>
+            <p className="text-xs font-black text-slate-500 uppercase tracking-widest italic">Toca el recuadro para sacar una foto o elegir una de la galería.</p>
+          </div>
+
           <div className="grid md:grid-cols-2 gap-4">
             <input required placeholder="Nombre Completo" className="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all font-bold" value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-            <input placeholder="Objetivo (ej: Hipertrofia)" className="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl outline-none focus:ring-2 ring-blue-500 transition-all" value={form.objective} onChange={e => setForm({...form, objective: e.target.value})} />
+            <input placeholder="WhatsApp (Ej: 54911...)" className="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl outline-none" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} />
+            <input placeholder="Email" className="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl outline-none" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
+            <input placeholder="Instagram (@usuario)" className="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl outline-none" value={form.instagram} onChange={e => setForm({...form, instagram: e.target.value})} />
+            <input placeholder="Objetivo (ej: Hipertrofia)" className="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl outline-none" value={form.objective} onChange={e => setForm({...form, objective: e.target.value})} />
             <div className="grid grid-cols-2 gap-4">
               <input type="number" placeholder="Altura (cm)" className="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl outline-none" value={form.height} onChange={e => setForm({...form, height: e.target.value})} />
               <input type="number" placeholder="Peso (kg)" className="bg-slate-100 dark:bg-slate-800 p-4 rounded-xl outline-none" value={form.weight} onChange={e => setForm({...form, weight: e.target.value})} />
@@ -260,35 +292,95 @@ const StudentsView = ({ students, user }) => {
           </div>
           <textarea placeholder="Notas adicionales..." className="w-full bg-slate-100 dark:bg-slate-800 p-4 rounded-xl outline-none h-24" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} />
           <div className="flex gap-4">
-            <button type="submit" className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-black uppercase shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"><Save size={20} /> {editingId ? 'Actualizar' : 'Guardar'}</button>
-            <button type="button" onClick={() => { setIsAdding(false); setEditingId(null); setForm({ name: '', phone: '', objective: '', height: '', weight: '', disability: '', notes: '' }); }} className="px-8 py-4 text-slate-500 font-bold uppercase hover:text-slate-700">Cancelar</button>
+            <button type="submit" className="flex-1 bg-blue-600 text-white py-4 rounded-xl font-black uppercase shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 transition active:scale-95"><Save size={20} /> {editingId ? 'Actualizar' : 'Guardar'}</button>
+            <button type="button" onClick={() => { setIsAdding(false); setEditingId(null); setForm({ name: '', phone: '', email: '', instagram: '', objective: '', height: '', weight: '', disability: '', notes: '', photo: '' }); }} className="px-8 py-4 text-slate-500 font-black uppercase text-xs hover:text-slate-700">Cancelar</button>
           </div>
         </form>
       )}
 
+      {}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {students.map(s => (
-          <div key={s.id} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 hover:shadow-xl transition-all group relative">
+          <div key={s.id} onClick={() => setSelectedStudent(s)} className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-200 dark:border-slate-800 hover:shadow-xl transition-all group relative cursor-pointer active:scale-[0.98]">
             <div className="flex items-start justify-between mb-4">
-              <div className="bg-slate-100 dark:bg-slate-800 w-14 h-14 rounded-2xl flex items-center justify-center text-xl font-black text-blue-500 uppercase">{s.name[0]}</div>
+              <div className="bg-slate-100 dark:bg-slate-800 w-16 h-16 rounded-2xl flex items-center justify-center text-xl font-black text-blue-500 uppercase overflow-hidden border-2 border-slate-200 dark:border-slate-700 shadow-inner">
+                {s.photo ? <img src={s.photo} className="w-full h-full object-cover" /> : s.name?.[0]}
+              </div>
               <div className="flex gap-2">
-                <button onClick={() => startEdit(s)} className="p-2 text-slate-400 hover:text-blue-500 transition-colors"><Edit2 size={18} /></button>
-                <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'students', s.id))} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
+                <button onClick={(e) => startEdit(e, s)} className="p-2 text-slate-400 hover:text-blue-500 transition-colors"><Edit2 size={18} /></button>
+                <button onClick={(e) => deleteS(e, s.id)} className="p-2 text-slate-400 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
               </div>
             </div>
-            <h3 className="text-xl font-black uppercase tracking-tight">{s.name}</h3>
-            <p className="text-blue-500 font-bold text-sm mb-4 uppercase tracking-tighter">{s.objective || 'Sin objetivo'}</p>
+            <h3 className="text-xl font-black uppercase tracking-tight italic mb-1">{s.name}</h3>
+            <p className="text-blue-500 font-bold text-[10px] mb-4 uppercase tracking-widest">{s.objective || 'Sin objetivo'}</p>
+            
+            <div className="flex gap-4 mb-4">
+              {s.phone && <a href={`https://wa.me/${s.phone.replace(/\D/g,'')}`} target="_blank" className="text-xl hover:scale-125 transition active:scale-90" title="WhatsApp">📱</a>}
+              {s.instagram && <a href={`https://instagram.com/${s.instagram.replace('@','')}`} target="_blank" className="text-xl hover:scale-125 transition active:scale-90" title="Instagram">📸</a>}
+              {s.email && <a href={`mailto:${s.email}`} target="_blank" className="text-xl hover:scale-125 transition active:scale-90" title="Email">📧</a>}
+            </div>
+
             <div className="grid grid-cols-2 gap-2 text-[10px] font-black uppercase text-slate-400 mb-4 tracking-widest">
               <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-center border border-slate-100 dark:border-slate-800">📏 {s.height || '--'} cm</div>
               <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg text-center border border-slate-100 dark:border-slate-800">⚖️ {s.weight || '--'} kg</div>
             </div>
-            {s.disability && (
-              <div className="flex items-center gap-2 text-xs bg-red-50 dark:bg-red-950/30 text-red-500 p-2 rounded-lg mb-4 font-bold border border-red-100 dark:border-red-900/50"><AlertCircle size={14} /> {s.disability}</div>
-            )}
-            <p className="text-sm text-slate-500 italic leading-relaxed">"{s.notes || 'Sin notas.'}"</p>
+            <p className="text-xs text-slate-500 italic leading-relaxed line-clamp-2">"{s.notes || 'Sin notas.'}"</p>
           </div>
         ))}
       </div>
+
+      {}
+      {selectedStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl relative border border-slate-800">
+            <button onClick={() => setSelectedStudent(null)} className="absolute top-4 right-4 p-2 bg-slate-800/50 hover:bg-red-500 text-white rounded-full transition-all z-10"><X size={20}/></button>
+            <div className="h-48 bg-blue-600 relative overflow-hidden">
+               {selectedStudent.photo ? <img src={selectedStudent.photo} className="w-full h-full object-cover opacity-60" /> : <div className="w-full h-full flex items-center justify-center text-7xl font-black text-white/20 uppercase italic">{selectedStudent.name[0]}</div>}
+               <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent" />
+               <div className="absolute bottom-6 left-6">
+                 <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">{selectedStudent.name}</h2>
+                 <p className="text-blue-400 font-bold uppercase text-[10px] tracking-widest">{selectedStudent.objective}</p>
+               </div>
+            </div>
+            <div className="p-8 space-y-6">
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 text-center">
+                    <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Estatura</p>
+                    <p className="text-2xl font-black italic">{selectedStudent.height || '--'} cm</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 text-center">
+                    <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Masa</p>
+                    <p className="text-2xl font-black italic">{selectedStudent.weight || '--'} kg</p>
+                  </div>
+               </div>
+               <div className="space-y-3">
+                  <div className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                    <span className="text-[10px] font-black uppercase text-slate-400">WhatsApp</span>
+                    <a href={`https://wa.me/${selectedStudent.phone?.replace(/\D/g,'')}`} target="_blank" className="font-bold text-blue-500 hover:underline">{selectedStudent.phone || '---'}</a>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                    <span className="text-[10px] font-black uppercase text-slate-400">Instagram</span>
+                    <a href={`https://instagram.com/${selectedStudent.instagram?.replace('@','')}`} target="_blank" className="font-bold text-blue-500 hover:underline">{selectedStudent.instagram || '---'}</a>
+                  </div>
+                  <div className="flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                    <span className="text-[10px] font-black uppercase text-slate-400">Correo</span>
+                    <a href={`mailto:${selectedStudent.email}`} className="font-bold text-blue-500 hover:underline">{selectedStudent.email || '---'}</a>
+                  </div>
+               </div>
+               {selectedStudent.disability && (
+                 <div className="p-4 bg-red-50 dark:bg-red-950/20 text-red-500 rounded-2xl border border-red-100 dark:border-red-900/50">
+                    <p className="text-[10px] font-black uppercase mb-1">Restricciones / Alergias</p>
+                    <p className="font-bold text-sm italic">{selectedStudent.disability}</p>
+                 </div>
+               )}
+               <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                  <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Notas del Profe</p>
+                  <p className="text-xs italic text-slate-500 leading-relaxed">"{selectedStudent.notes || 'Sin anotaciones.'}"</p>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -349,13 +441,7 @@ const CalendarView = ({ classes, students, user }) => {
               const isSelected = selectedDay === dateStr;
               const hasClasses = classes.some(c => c.date === dateStr);
               return (
-                <button 
-                  key={idx} 
-                  onClick={() => setSelectedDay(dateStr)}
-                  className={`relative h-14 rounded-xl flex flex-col items-center justify-center font-bold transition-all active:scale-90 ${
-                    isSelected ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/40' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
-                  }`}
-                >
+                <button key={idx} onClick={() => setSelectedDay(dateStr)} className={`relative h-14 rounded-xl flex flex-col items-center justify-center font-bold transition-all active:scale-90 ${isSelected ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/40' : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
                   {day}
                   {hasClasses && !isSelected && <div className="absolute bottom-2 w-1.5 h-1.5 bg-blue-500 rounded-full" />}
                 </button>
@@ -366,7 +452,7 @@ const CalendarView = ({ classes, students, user }) => {
       </div>
       <div className="lg:col-span-2 space-y-6">
         <div className="bg-slate-900 text-white p-8 rounded-3xl shadow-xl h-full border border-slate-800">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
             <div>
               <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1">Día seleccionado</p>
               <h3 className="text-2xl font-black">{selectedDay.split('-').reverse().join('/')}</h3>
@@ -392,7 +478,7 @@ const CalendarView = ({ classes, students, user }) => {
               return (
                 <div key={c.id} className="p-4 bg-slate-800/50 rounded-2xl border border-slate-700 shadow-inner">
                   <div className="flex justify-between items-center mb-3">
-                    <span className="text-blue-400 font-black flex items-center gap-1 text-sm tracking-widest"><Clock size={14}/> {c.time} hs</span>
+                    <span className="text-blue-400 font-black flex items-center gap-1 text-sm tracking-widest italic"><Clock size={14}/> {c.time} hs</span>
                     <button onClick={() => deleteDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'classes', c.id))} className="text-slate-600 hover:text-red-400 transition-colors"><XCircle size={16}/></button>
                   </div>
                   <p className="font-bold text-lg mb-4">{s?.name || '---'}</p>
@@ -425,45 +511,40 @@ const PaymentsView = ({ students, payments, user }) => {
   
   const months = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
-  // Calculating Monthly Balance
-  const monthlyBalances = payments.reduce((acc, p) => {
+  const balances = payments.reduce((acc, p) => {
     const key = `${p.month}-${p.year}`;
-    if (!acc[key]) acc[key] = { month: p.month, year: p.year, total: 0 };
-    acc[key].total += Number(p.amount || 0);
+    acc[key] = (acc[key] || 0) + Number(p.amount);
     return acc;
   }, {});
-
-  const balanceList = Object.values(monthlyBalances).sort((a, b) => b.year !== a.year ? b.year - a.year : b.month - a.month);
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto animate-in fade-in">
       <h2 className="text-3xl font-black italic tracking-tighter uppercase">Gestión de Pagos</h2>
-      
       <form onSubmit={add} className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 grid md:grid-cols-5 gap-4 items-end shadow-sm">
         <div className="col-span-2 md:col-span-1">
-          <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block tracking-widest">Periodo</label>
+          <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block tracking-widest italic">Periodo</label>
           <div className="flex gap-2">
             <select className="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl outline-none text-xs font-bold" value={form.month} onChange={e => setForm({...form, month: Number(e.target.value)})}>
               {months.map((m, i) => <option key={i} value={i+1}>{m}</option>)}
             </select>
             <select className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl outline-none text-xs font-bold" value={form.year} onChange={e => setForm({...form, year: Number(e.target.value)})}>
-              {[2024, 2025, 2026, 2027].map(y => <option key={y} value={y}>{y}</option>)}
+              {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
             </select>
           </div>
         </div>
         <div>
-          <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block tracking-widest">Alumno</label>
+          <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block tracking-widest italic">Alumno</label>
           <select required className="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl outline-none font-bold" value={form.studentId} onChange={e => setForm({...form, studentId: e.target.value})}>
             <option value="">Elegir alumno</option>
             {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
           </select>
         </div>
         <div>
-          <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block tracking-widest">Monto ($)</label>
+          <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block tracking-widest italic">Monto ($)</label>
           <input required type="number" className="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl outline-none font-bold" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} />
         </div>
         <div>
-          <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block tracking-widest">Estado</label>
+          <label className="text-[10px] font-black uppercase text-slate-400 mb-2 block tracking-widest italic">Estado</label>
           <select className="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl outline-none font-bold" value={form.status} onChange={e => setForm({...form, status: e.target.value})}>
             <option value="paid">Pagado</option>
             <option value="pending">Adeudado</option>
@@ -472,14 +553,17 @@ const PaymentsView = ({ students, payments, user }) => {
         <button type="submit" className="bg-emerald-600 text-white py-3.5 rounded-xl font-black uppercase text-sm shadow-lg hover:bg-emerald-700 transition active:scale-95 shadow-emerald-500/20 tracking-widest">Registrar</button>
       </form>
 
-      {/* Monthly Balance Summary Section */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 py-4">
-        {balanceList.slice(0, 6).map((b, i) => (
-          <div key={i} className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-2xl flex flex-col items-center">
-            <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-1">{months[b.month - 1]} {b.year}</span>
-            <span className="text-xl font-black text-emerald-700 italic tracking-tighter">${b.total}</span>
-          </div>
-        ))}
+      {}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {Object.entries(balances).map(([key, total]) => {
+           const [m, y] = key.split('-');
+           return (
+             <div key={key} className="bg-emerald-50 dark:bg-emerald-950/20 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800 text-center animate-in zoom-in duration-300">
+               <p className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 tracking-widest italic">{months[m-1]} {y}</p>
+               <p className="text-xl font-black italic text-emerald-700 dark:text-emerald-300 tracking-tighter">${total}</p>
+             </div>
+           );
+        })}
       </div>
 
       <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
@@ -487,10 +571,10 @@ const PaymentsView = ({ students, payments, user }) => {
           <table className="w-full text-left">
             <thead className="bg-slate-50 dark:bg-slate-800/50">
               <tr>
-                <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider">Mes / Año</th>
-                <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider">Alumno</th>
-                <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider">Monto</th>
-                <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider">Estado</th>
+                <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider italic">Mes / Año</th>
+                <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider italic">Alumno</th>
+                <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider italic">Monto</th>
+                <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-wider italic">Estado</th>
                 <th className="p-4"></th>
               </tr>
             </thead>
@@ -499,7 +583,7 @@ const PaymentsView = ({ students, payments, user }) => {
                 const s = students.find(st => st.id === p.studentId);
                 return (
                   <tr key={p.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/30 transition-colors">
-                    <td className="p-4 font-black text-xs uppercase tracking-tighter text-slate-500">{months[(p.month || 1) - 1]} {p.year}</td>
+                    <td className="p-4 font-black text-xs uppercase tracking-tighter text-slate-500 italic">{months[(p.month || 1) - 1]} {p.year}</td>
                     <td className="p-4 font-black uppercase tracking-tight">{s?.name || '---'}</td>
                     <td className="p-4 font-black text-emerald-600 text-lg">${p.amount}</td>
                     <td className="p-4"><span className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${p.status === 'paid' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>{p.status === 'paid' ? 'Cobrado' : 'Adeuda'}</span></td>
@@ -521,30 +605,30 @@ const SettingsView = ({ settings, user }) => {
   const [temp, setTemp] = useState(settings);
   const save = async () => {
     await setDoc(doc(db, 'artifacts', appId, 'users', user.uid, 'config', 'settings'), temp);
-    alert("¡Ajustes guardados!");
+    alert("¡Ajustes guardados con éxito!");
   };
   return (
     <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in">
-      <h2 className="text-3xl font-black italic uppercase tracking-tighter">Personalización</h2>
+      <h2 className="text-3xl font-black italic uppercase tracking-tighter italic">Personalización</h2>
       <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-200 dark:border-slate-800 space-y-6 shadow-xl">
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-2 tracking-widest"><Type size={14}/> Nombre Comercial</label>
+          <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-2 tracking-widest italic"><Type size={14}/> Nombre Comercial</label>
           <input className="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl outline-none font-black ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-blue-500 transition-all uppercase tracking-tighter" value={temp.appName} onChange={e => setTemp({...temp, appName: e.target.value})} />
         </div>
         <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-2 tracking-widest"><TrendingUp size={14}/> URL del Logo</label>
+          <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-2 tracking-widest italic"><ImageIcon size={14}/> URL del Logo</label>
           <input className="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl outline-none ring-1 ring-slate-200 dark:ring-slate-700 focus:ring-2 focus:ring-blue-500 transition-all" value={temp.logoUrl} onChange={e => setTemp({...temp, logoUrl: e.target.value})} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-2 tracking-widest"><Palette size={14}/> Color Primario</label>
+            <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-2 tracking-widest italic"><Palette size={14}/> Color Primario</label>
             <div className="flex gap-2 items-center">
               <input type="color" className="w-full h-12 rounded-xl cursor-pointer bg-transparent border-none" value={temp.primaryColor} onChange={e => setTemp({...temp, primaryColor: e.target.value})} />
               <span className="text-[10px] font-mono font-black text-slate-400 uppercase">{temp.primaryColor}</span>
             </div>
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-2 tracking-widest"><Palette size={14}/> Color Acento</label>
+            <label className="text-[10px] font-black uppercase text-slate-400 flex items-center gap-2 tracking-widest italic"><Palette size={14}/> Color Acento</label>
             <div className="flex gap-2 items-center">
               <input type="color" className="w-full h-12 rounded-xl cursor-pointer bg-transparent border-none" value={temp.accentColor} onChange={e => setTemp({...temp, accentColor: e.target.value})} />
               <span className="text-[10px] font-mono font-black text-slate-400 uppercase">{temp.accentColor}</span>
